@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
-import React from 'react';
+import React, { useState } from 'react';
 import './App.scss';
 import cn from 'classnames';
 
@@ -15,6 +15,12 @@ import productsFromServer from './api/products';
 // });
 
 export const App = () => {
+  const [userItem, setUserItem] = useState('');
+
+  function handleSetUser(userItem) {
+    setUserItem(userItem);
+  }
+
   function infoAgregation() {
     const categoriesWithUsers = categoriesFromServer.map(category => ({
       ...category,
@@ -29,7 +35,20 @@ export const App = () => {
     }));
   }
 
+  function getPrepearedProducts(agregatedInfo, setedUser) {
+    let agregatedInfoCopy = [...agregatedInfo];
+
+    if (setedUser) {
+      agregatedInfoCopy = agregatedInfoCopy.filter(
+        infoItem => infoItem.category.user.name === setedUser,
+      );
+    }
+
+    return agregatedInfoCopy;
+  }
+
   const allProducts = infoAgregation();
+  const visibleProducts = getPrepearedProducts(allProducts, userItem);
 
   return (
     <div className="section">
@@ -41,21 +60,34 @@ export const App = () => {
             <p className="panel-heading">Filters</p>
 
             <p className="panel-tabs has-text-weight-bold">
-              <a data-cy="FilterAllUsers" href="#/">
+              <a
+                data-cy="FilterAllUsers"
+                className={cn({
+                  'is-active': userItem === '',
+                })}
+                href="#/"
+                onClick={() => handleSetUser('')}
+              >
                 All
               </a>
 
-              <a data-cy="FilterUser" href="#/">
-                User 1
-              </a>
-
-              <a data-cy="FilterUser" href="#/" className="is-active">
-                User 2
-              </a>
-
-              <a data-cy="FilterUser" href="#/">
-                User 3
-              </a>
+              {usersFromServer.map(user => {
+                return (
+                  <a
+                    key={user.id}
+                    data-cy="FilterUser"
+                    className={cn({
+                      'is-active': user.name === userItem,
+                    })}
+                    href="#/"
+                    onClick={() => {
+                      handleSetUser(user.name);
+                    }}
+                  >
+                    {user.name}
+                  </a>
+                );
+              })}
             </p>
 
             <div className="panel-block">
@@ -186,7 +218,7 @@ export const App = () => {
             </thead>
 
             <tbody>
-              {allProducts.map(product => {
+              {visibleProducts.map(product => {
                 return (
                   <tr key={product.id} data-cy="Product">
                     <td className="has-text-weight-bold" data-cy="ProductId">
